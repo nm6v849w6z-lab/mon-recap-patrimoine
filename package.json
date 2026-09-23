@@ -1,0 +1,18 @@
+{
+  "name": "patrimoine-app",
+  "version": "1.0.0",
+  "description": "Dashboard perso pour agreger Caisse d'Epargne (perso + SCI) et Trade Republic via Powens",
+  "main": "server/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "selfsigned": "^2.4.1"
+  }
+}

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: mon-recap-patrimoine
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: POWENS_DOMAIN
+        sync: false
+      - key: POWENS_CLIENT_ID
+        sync: false
+      - key: POWENS_CLIENT_SECRET
+        sync: false
+      - key: POWENS_REDIRECT_URI
+        sync: false
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_BUCKET
+        sync: false
+      - key: B2_ENDPOINT
+        sync: false
+      - key: B2_REGION
+        sync: false

@@ -1,0 +1,17 @@
+# Replication continue de data.sqlite vers Backblaze B2 (S3-compatible),
+# pour que les donnees survivent aux redemarrages du service sur Render.
+# Toutes les valeurs viennent de variables d'environnement definies dans le
+# dashboard Render -- rien de secret n'est ecrit dans ce fichier.
+
+access-key-id: ${B2_KEY_ID}
+secret-access-key: ${B2_APPLICATION_KEY}
+
+dbs:
+  - path: /app/data.sqlite
+    replica:
+      type: s3
+      bucket: ${B2_BUCKET}
+      path: mon-recap-patrimoine
+      endpoint: ${B2_ENDPOINT}
+      region: ${B2_REGION}
+      force-path-style: true

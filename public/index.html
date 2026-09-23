@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mon récap patrimoine</title>
+
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#10141b" />
+  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mon récap patrimoine" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="auth-screen" class="screen hidden">
+    <div class="setup-card">
+      <h1>Mon récap patrimoine</h1>
+      <p class="muted" id="auth-subtitle">Connecte-toi pour accéder à tes comptes.</p>
+
+      <form id="login-form">
+        <input type="text" id="login-username" class="pin-input auth-input" placeholder="Identifiant" autocomplete="username" autofocus />
+        <input type="password" id="login-password" class="pin-input auth-input" placeholder="Mot de passe" autocomplete="current-password" />
+        <button type="submit" class="btn">Se connecter</button>
+      </form>
+
+      <form id="register-form" class="hidden">
+        <input type="text" id="register-username" class="pin-input auth-input" placeholder="Choisis un identifiant (3 car. min.)" autocomplete="username" />
+        <input type="password" id="register-password" class="pin-input auth-input" placeholder="Choisis un mot de passe (8 car. min.)" autocomplete="new-password" />
+        <input type="text" id="register-signup-code" class="pin-input auth-input hidden" placeholder="Code d'invitation" />
+        <button type="submit" class="btn">Créer mon compte</button>
+      </form>
+
+      <p class="hint">
+        <a href="#" id="auth-toggle">Pas encore de compte ? Crée-en un.</a>
+      </p>
+      <p class="hint">⚠️ Ce mot de passe chiffre l'accès à tes comptes Powens. S'il est perdu,
+        il n'y a pas de récupération possible : il faudra reconnecter tes comptes depuis zéro
+        (voir le README).</p>
+      <p id="auth-error" class="error hidden"></p>
+    </div>
+  </div>
+
+  <div id="setup-screen" class="screen hidden">
+    <div class="setup-card">
+      <h1>Mon récap patrimoine</h1>
+      <p class="muted">Configuration Powens manquante ou incomplete.</p>
+      <p>Renseigne <code>POWENS_DOMAIN</code>, <code>POWENS_CLIENT_ID</code> et
+        <code>POWENS_CLIENT_SECRET</code> dans le fichier <code>.env</code> (voir
+        <code>.env.example</code> et le <code>README.md</code>), puis redemarre le serveur.</p>
+    </div>
+  </div>
+
+  <div id="connect-screen" class="screen hidden">
+    <div class="setup-card">
+      <h1>Mon récap patrimoine</h1>
+      <p class="muted">Aucun compte relie pour le moment.</p>
+      <a class="btn" href="/connect">Relier un compte</a>
+      <p class="hint">Relie chacune de tes banques une par une — reviens ici et clique a
+        nouveau sur "Relier un compte" pour chaque etablissement.</p>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <header class="topbar">
+      <h1>Mon récap patrimoine</h1>
+      <div class="topbar-actions">
+        <a class="btn ghost" href="/manage">Gerer les connexions</a>
+        <a class="btn ghost" href="/connect">+ Ajouter un compte</a>
+        <button id="sync-btn" class="btn">Synchroniser</button>
+        <button id="lock-btn" class="btn ghost" title="Verrouiller">🔒</button>
+      </div>
+    </header>
+
+    <div class="networth-block">
+      <div class="networth-label">Patrimoine total</div>
+      <div class="networth-value" id="networth-total">—</div>
+      <div class="perf-row" id="networth-perf"></div>
+      <svg id="networth-chart" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+    </div>
+
+    <nav class="tabbar">
+      <button class="tab-btn active" data-tab="bilan">Bilan</button>
+      <button class="tab-btn" data-tab="transactions">Transactions</button>
+      <button class="tab-btn" data-tab="projection">Projection</button>
+    </nav>
+
+    <main class="layout">
+      <aside class="sidebar" id="sidebar"></aside>
+
+      <section class="main">
+
+        <!-- Onglet Bilan : allocation + actif / passif -->
+        <div class="tab-panel active" data-tab-panel="bilan">
+          <div class="insights-block">
+            <div class="insights-header">
+              <h2>Allocation</h2>
+            </div>
+            <div class="allocation-grid">
+              <div class="allocation-card">
+                <h3>Classe d'actif</h3>
+                <div class="donut-wrap" id="alloc-asset"></div>
+              </div>
+              <div class="allocation-card">
+                <h3>Devise</h3>
+                <div class="donut-wrap" id="alloc-currency"></div>
+              </div>
+              <div class="allocation-card">
+                <h3>Zone géographique (titres)</h3>
+                <div class="donut-wrap" id="alloc-geo"></div>
+                <div class="geo-edit-row" id="geo-edit-row"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="balance-sheet">
+            <div class="balance-col">
+              <div class="balance-col-header actif">
+                <h2>Actif</h2>
+                <span class="balance-col-total" id="actif-total"></span>
+              </div>
+
+              <div class="balance-subsection">
+                <div class="balance-subsection-title">Financier</div>
+                <div id="financial-list" class="balance-list"></div>
+              </div>
+
+              <div class="balance-subsection">
+                <div class="balance-subsection-title">
+                  Immobilier &amp; autres actifs
+                  <button id="add-property-btn" class="btn ghost small">+ Bien</button>
+                </div>
+                <div id="properties-list" class="balance-list"></div>
+              </div>
+            </div>
+
+            <div class="balance-col">
+              <div class="balance-col-header passif">
+                <h2>Passif</h2>
+                <span class="balance-col-total" id="passif-total"></span>
+              </div>
+
+              <div class="balance-subsection">
+                <div class="balance-subsection-title">
+                  Crédits
+                  <button id="add-loan-btn" class="btn ghost small">+ Crédit</button>
+                </div>
+                <div id="loans-list" class="balance-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="insights-block" id="insights-block">
+            <div class="insights-header">
+              <h2>Indicateurs du mois</h2>
+            </div>
+            <div class="insights-grid" id="insights-grid"></div>
+          </div>
+        </div>
+
+        <!-- Onglet Transactions : grand livre du compte selectionne -->
+        <div class="tab-panel" data-tab-panel="transactions">
+          <div class="ledger-block spaced" id="positions-block">
+            <div class="ledger-header">
+              <h2>Positions</h2>
+            </div>
+            <table class="ledger">
+              <thead>
+                <tr>
+                  <th>Titre</th><th class="num">Quantité</th><th class="num">Cours</th>
+                  <th class="num">Valorisation</th><th class="num">Perf.</th><th>Zone géo.</th>
+                </tr>
+              </thead>
+              <tbody id="positions-body"></tbody>
+            </table>
+          </div>
+
+          <div class="ledger-block">
+            <div class="ledger-header">
+              <div>
+                <h2 id="ledger-title">Selectionne un compte</h2>
+                <div class="perf-row" id="account-perf"></div>
+                <div class="perf-row" id="account-real-perf"></div>
+              </div>
+              <span id="ledger-balance" class="ledger-balance"></span>
+            </div>
+            <table class="ledger">
+              <thead>
+                <tr><th>Date</th><th>Libelle</th><th>Categorie</th><th class="num">Montant</th></tr>
+              </thead>
+              <tbody id="ledger-body"></tbody>
+            </table>
+            <p id="ledger-empty" class="muted hidden">Aucune operation a afficher.</p>
+          </div>
+        </div>
+
+        <!-- Onglet Projection -->
+        <div class="tab-panel" data-tab-panel="projection">
+          <div class="insights-block">
+            <div class="insights-header">
+              <h2>Projecteur de patrimoine</h2>
+            </div>
+            <div class="projector-controls">
+              <div class="projector-field">
+                <label for="proj-dca">DCA mensuel (€)</label>
+                <input type="number" id="proj-dca" min="0" step="10" />
+              </div>
+              <div class="projector-field">
+                <label for="proj-return">Rendement annuel espéré (%)</label>
+                <input type="number" id="proj-return" min="-20" max="30" step="0.5" />
+              </div>
+              <div class="projector-field">
+                <label for="proj-appreciation">Appréciation immobilière (%/an)</label>
+                <input type="number" id="proj-appreciation" min="-10" max="20" step="0.5" />
+              </div>
+            </div>
+            <div class="milestones-row" id="milestones-row"></div>
+            <svg id="projection-chart" viewBox="0 0 600 140" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <span class="modal-close" id="modal-close">✕</span>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <p id="modal-error" class="error hidden"></p>
+      <div class="modal-footer">
+        <button class="btn ghost" id="modal-cancel">Annuler</button>
+        <button class="btn" id="modal-submit">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
